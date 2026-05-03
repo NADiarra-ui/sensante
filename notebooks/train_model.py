@@ -177,3 +177,34 @@ print(f"  Diagnostic prédit : {prediction}")
 print("  Probabilités par classe :")
 for classe, prob in zip(model_loaded.classes_, probabilites):
     print(f"    {classe:12s} : {prob:.2%}")
+
+
+    # ========== EXERCICES ==========
+print("\n=== Exercice 1 : Importance des features ===")
+importances = model.feature_importances_
+for name, imp in sorted(zip(feature_cols, importances), key=lambda x: x[1], reverse=True):
+    print(f"  {name:20s} : {imp:.3f}")
+
+
+print("\n=== Exercice 2 : Tester avec d'autres patients ===")
+
+# Patient 1 : jeune sans symptômes
+sexe1 = le_sexe_loaded.transform(['M'])[0]
+region1 = le_region_loaded.transform(['Dakar'])[0]   # région connue
+feat1 = [20, sexe1, 37.0, 120, 0, 0, 0, region1]
+diag1 = model_loaded.predict([feat1])[0]
+print(f"Jeune sans symptômes (Dakar) -> {diag1}")
+
+# Patient 2 : adulte avec forte fièvre
+sexe2 = le_sexe_loaded.transform(['F'])[0]
+region2 = le_region_loaded.transform(['Kaolack'])[0] # région connue
+feat2 = [35, sexe2, 40.2, 100, 1, 1, 1, region2]
+diag2 = model_loaded.predict([feat2])[0]
+print(f"Adulte forte fièvre (Kaolack) -> {diag2}")
+
+# Patient 3 : âgé avec toux
+sexe3 = le_sexe_loaded.transform(['M'])[0]
+region3 = le_region_loaded.transform(['Saint-Louis'])[0] # région connue
+feat3 = [65, sexe3, 38.5, 140, 1, 0, 0, region3]
+diag3 = model_loaded.predict([feat3])[0]
+print(f"Âgé avec toux (Saint-Louis) -> {diag3}")
