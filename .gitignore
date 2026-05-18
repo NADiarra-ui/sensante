@@ -16,3 +16,6 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Cles API - NE JAMAIS COMMITER  
+.env

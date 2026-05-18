@@ -108,6 +108,14 @@
     </select>
   </div>
 
+  <!-- Nom du patient -->
+  <div class="mb-3">
+    <label class="block text-sm font-medium text-gray-700 mb-1">Nom du patient</label>
+    <input type="text" id="nom"
+           class="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+           placeholder="Ex: Awa Diop">
+  </div>
+
   <!-- Bouton -->
   <button onclick="diagnostiquer()"
           id="btn-diag"
@@ -126,8 +134,17 @@
     <p class="text-sm mt-1">puis cliquez sur Diagnostiquer</p>
   </div>
 </div>
+
+    <!-- Colonne droite : resultat -->
+    <div id="result-section">
+      ... (ne rien changer ici)
+    </div>
       </div>
     </div>
+
+<!-- Historique des consultations -->
+    <div id="historique-section" class="mt-6"></div>
+
   </main>
 
   <!-- Footer -->
@@ -137,8 +154,11 @@
 
   <!-- JavaScript -->
   <script>
-   // URL de l'API (a changer si l'API est ailleurs)
+  // URL de l'API (a changer si l'API est ailleurs)
 const API_URL = "http://localhost:8000";
+
+// Historique (max 5)
+const historique = [];
 
 async function diagnostiquer() {
   // 1. Recuperer les valeurs du formulaire
@@ -150,6 +170,7 @@ async function diagnostiquer() {
     toux: document.getElementById("toux").checked,
     fatigue: document.getElementById("fatigue").checked,
     maux_tete: document.getElementById("maux_tete").checked,
+    nom: document.getElementById("nom").value.trim() || "Anonyme",
     region: document.getElementById("region").value
   };
 
@@ -185,6 +206,18 @@ async function diagnostiquer() {
 
     // 7. Afficher le resultat
     afficherResultat(resultat);
+
+    // 8. Ajouter a l'historique
+    historique.push({
+      nom: patient.nom,
+      diagnostic: resultat.diagnostic,
+      probabilite: Math.round(resultat.probabilite * 100)
+    });
+    if (historique.length > 5) {
+      historique.shift();
+    }
+    afficherHistorique();
+
   } catch (error) {
     afficherErreur("Erreur de connexion : " + error.message);
   }
@@ -207,6 +240,16 @@ function afficherResultat(r) {
     sain: { bg: "bg-green-100", text: "text-green-800", bar: "bg-green-500", badge: "bg-green-500" }
   };
   const c = couleurs[r.diagnostic] || couleurs["sain"];
+
+  // Emojis pour exo 1
+  const emojis = {
+    palu: "🌡️",
+    grippe: "❄️",
+    typh: "⚠️",
+    sain: "✅"
+  };
+  const emoji = emojis[r.diagnostic] || emojis["sain"];
+
   const pct = Math.round(r.probabilite * 100);
   const section = document.getElementById("result-section");
   section.innerHTML = `
@@ -214,7 +257,7 @@ function afficherResultat(r) {
       <h2 class="text-xl font-bold text-gray-800 mb-4">Resultat</h2>
       <div class="${c.bg} rounded-lg p-4 mb-4">
         <p class="text-sm text-gray-600">Diagnostic :</p>
-        <p class="text-2xl font-bold ${c.text} uppercase mt-1">${r.diagnostic}</p>
+        <p class="text-2xl font-bold ${c.text} uppercase mt-1">${r.diagnostic} ${emoji}</p>
       </div>
       <div class="mb-4">
         <div class="flex justify-between mb-1">
@@ -233,7 +276,58 @@ function afficherResultat(r) {
         <p class="text-sm text-gray-700">${r.message}</p>
       </div>
     </div>`;
+  demanderExplication(r);  
 }
+
+
+async function demanderExplication(diagnostic_data) {
+    // Récupérer les données du formulaire
+    const explainData = {
+        diagnostic: diagnostic_data.diagnostic,
+        probabilite: diagnostic_data.probabilite,
+        age: parseInt(document.getElementById("age").value),
+        sexe: document.getElementById("sexe").value,
+        temperature: parseFloat(document.getElementById("temperature").value),
+        region: document.getElementById("region").value
+    };
+
+    // Zone d'explication dans le result-section
+    const section = document.getElementById("result-section");
+    // Ajouter un placeholder
+    const explDiv = document.createElement("div");
+    explDiv.id = "explication-zone";
+    explDiv.innerHTML = `
+        <div class="mt-4 bg-purple-50 rounded-lg p-4 border border-purple-200">
+            <p class="text-sm text-purple-600 font-medium mb-2">Explication (Llama 3)</p>
+            <p class="text-gray-500 text-sm animate-pulse">Génération en cours...</p>
+        </div>
+    `;
+    section.querySelector(".bg-white").appendChild(explDiv);
+
+    try {
+        const response = await fetch("http://localhost:8000/explain", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(explainData)
+        });
+        if (response.ok) {
+            const result = await response.json();
+            explDiv.innerHTML = `
+                <div class="mt-4 bg-purple-50 rounded-lg p-4 border border-purple-200">
+                    <p class="text-sm text-purple-600 font-medium mb-2">Explication (Llama 3)</p>
+                    <p class="text-gray-700 text-sm leading-relaxed">${result.explication}</p>
+                </div>
+            `;
+        }
+    } catch (error) {
+        explDiv.innerHTML = `
+            <div class="mt-4 bg-gray-50 rounded-lg p-3">
+                <p class="text-gray-400 text-sm">Explication non disponible.</p>
+            </div>
+        `;
+    }
+}
+
 
 function afficherErreur(msg) {
   const section = document.getElementById("result-section");
@@ -241,6 +335,41 @@ function afficherErreur(msg) {
     <div class="bg-red-50 border border-red-200 rounded-xl p-6">
       <p class="text-red-700 font-medium">${msg}</p>
       <p class="text-red-500 text-sm mt-2">Verifiez votre connexion et reessayez.</p>
+    </div>`;
+}
+
+function afficherHistorique() {
+  const section = document.getElementById("historique-section");
+  if (historique.length === 0) {
+    section.innerHTML = "";
+    return;
+  }
+  let lignes = "";
+  historique.forEach((h) => {
+    lignes += `
+      <tr class="border-b border-gray-200 text-sm">
+        <td class="py-2 px-3">${h.nom}</td>
+        <td class="py-2 px-3 uppercase font-medium">${h.diagnostic}</td>
+        <td class="py-2 px-3">${h.probabilite}%</td>
+      </tr>`;
+  });
+  section.innerHTML = `
+    <div class="bg-white rounded-xl shadow-md p-6">
+      <h3 class="text-lg font-bold text-gray-800 mb-3">Historique (5 derniers)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left">
+          <thead>
+            <tr class="bg-gray-100 text-gray-600 uppercase text-xs">
+              <th class="py-2 px-3">Patient</th>
+              <th class="py-2 px-3">Diagnostic</th>
+              <th class="py-2 px-3">Probabilité</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lignes}
+          </tbody>
+        </table>
+      </div>
     </div>`;
 }
   </script>
