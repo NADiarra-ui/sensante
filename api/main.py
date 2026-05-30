@@ -8,20 +8,15 @@ import joblib
 import numpy as np
 import os
 
-# --- Charger le modèle et les encodeurs au démarrage ---
-MODEL_DIR = "models"
 
-# Vérifier si les modèles existent, sinon les télécharger
-model_path = os.path.join(MODEL_DIR, "model.pkl")
-if not os.path.exists(model_path):
-    import urllib.request
-    BASE_URL = "https://huggingface.co/spaces/Ayssatou/sensante/resolve/main/models"
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    for filename in ["model.pkl", "encoder_region.pkl", "encoder_sexe.pkl", "feature_cols.pkl"]:
-        url = f"{BASE_URL}/{filename}"
-        filepath = os.path.join(MODEL_DIR, filename)
-        urllib.request.urlretrieve(url, filepath)
-        print(f"Téléchargé : {filename}")
+# --- Charger le modèle et les encodeurs au démarrage ---
+print("Chargement du modele...")
+model = joblib.load("models/model.pkl")
+le_sexe = joblib.load("models/encoder_sexe.pkl")
+le_region = joblib.load("models/encoder_region.pkl")
+feature_cols = joblib.load("models/feature_cols.pkl")
+print(f"Modele charge : {type(model).__name__}")
+print(f"Classes : {list(model.classes_)}")
 
 print("Chargement du modele...")
 model = joblib.load("models/model.pkl")
