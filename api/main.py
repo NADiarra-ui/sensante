@@ -4,6 +4,21 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from dotenv import load_dotenv
 from groq import Groq
+import os
+import urllib.request
+
+# Télécharger les modèles depuis GitHub s'ils n'existent pas
+MODEL_DIR = "models"
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+BASE_URL = "https://raw.githubusercontent.com/NADiarra-ui/sensante/main/models"
+
+for filename in ["model.pkl", "encoder_region.pkl", "encoder_sexe.pkl", "feature_cols.pkl"]:
+    filepath = os.path.join(MODEL_DIR, filename)
+    if not os.path.exists(filepath):
+        url = f"{BASE_URL}/{filename}"
+        urllib.request.urlretrieve(url, filepath)
+        print(f"Téléchargé : {filename}")
 
 # --- Schemas Pydantic ---
 class PatientInput(BaseModel):
