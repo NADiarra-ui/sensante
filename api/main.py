@@ -146,7 +146,14 @@ def predict(patient: PatientInput):
     )
 
 
-SYSTEM_PROMPT = """Tu es un assistant medical senegalais. Tu recois un diagnostic et des donnees patient. Explique le resultat en francais simple, comme un medecin parlerait a son patient. Sois rassurant mais recommande toujours une consultation medicale. Maximum 3 phrases. Ne fais JAMAIS de diagnostic toi-meme. Tu expliques uniquement le diagnostic fourni."""
+SYSTEM_PROMPT = """Tu es un assistant médical sénégalais qui parle un français simple, 
+mélangé avec quelques mots wolof courants. 
+Quand tu expliques un diagnostic, utilise des termes wolof que les patients ruraux comprennent 
+(par exemple : « fievre » = « fievre », « palu » = « paludisme », « doktoor » = « médecin », 
+« garab » = « médicament », « ndox » = « eau »). 
+Explique le résultat en maximum 3 phrases, comme un médecin parlerait à son patient à Ziguinchor. 
+Sois rassurant mais recommande toujours une consultation médicale. 
+Ne fais JAMAIS de diagnostic toi-même. Tu expliques uniquement le diagnostic fourni."""
 
 @app.post("/explain", response_model=ExplainOutput)
 def explain(data: ExplainInput):
@@ -256,5 +263,16 @@ if groq_api_key:
 else:
     print("ATTENTION : GROQ_API_KEY non trouvee. /explain sera desactive.")
 
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+# Servir le frontend comme fichier statique
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+def serve_frontend():
+    """Servir la page d'accueil."""
+    return FileResponse("frontend/index.html")
 
 

@@ -1,58 +1,45 @@
 # notebooks/test_groq.py
-# Test de l’API Groq avec Llama 3
+# Test de l'effet de la température sur les réponses de Llama 3
 
 import os
 from dotenv import load_dotenv
 from groq import Groq
 
-# Charger la cle depuis .env
+# Charger la clé depuis .env
 load_dotenv()
 api_key = os.getenv("GROQ_API_KEY")
-
 if not api_key:
-    print("ERREUR : GROQ_API_KEY non trouvee dans .env")
+    print("ERREUR : GROQ_API_KEY non trouvée dans .env")
     exit()
 
-# Creer le client Groq
 client = Groq(api_key=api_key)
 
-# Premier appel : question simple
-response = client.chat.completions.create(
-    model="llama-3.1-8b-instant",
-    messages=[
-        {"role": "system", "content": "Tu es un assistant medical senegalais. "
-         "Reponds en français simple. "
-         "Maximum 3 phrases."},
-        {"role": "user", "content": "Quels sont les symptomes du paludisme ?"}
-    ],
-    max_tokens=200,
-    temperature=0.3
-)
-# Afficher la reponse
-print("=== Reponse de Llama 3 ===")
-print(response.choices[0].message.content)
-print(f"\nTokens utilises : {response.usage.total_tokens}")
-
-# Test avec le format SenSante
-response2 = client.chat.completions.create(
-    model="llama-3.1-8b-instant",
-    messages=[
-        {"role": "system",
-         "content": """Tu es un assistant medical senegalais.
+# Prompt système et question utilisateur (ceux du Lab 5)
+SYSTEM_PROMPT = """Tu es un assistant medical senegalais.
          Tu recois un diagnostic et des donnees patient.
          Explique le resultat en francais simple,
          comme un medecin parlerait a son patient.
          Sois rassurant mais recommande une consultation.
          Maximum 3 phrases.
-         Ne fais JAMAIS de diagnostic toi-meme."""},
-        {"role": "user",
-         "content": """Patient : Femme, 28 ans, region Dakar
+         Ne fais JAMAIS de diagnostic toi-meme."""
+
+user_prompt = """Patient : Femme, 28 ans, region Dakar
          Symptomes : temperature 39.5, toux, fatigue, maux de tete
          Diagnostic du modele : paludisme (probabilite 72%)
-         Explique ce resultat au patient."""}
-    ],
-    max_tokens=200,
-    temperature=0.3
-)
-print("\n=== Explication SenSante ===")
-print(response2.choices[0].message.content)
+         Explique ce resultat au patient."""
+
+temperatures = [0.0, 0.5, 1.0]
+
+for temp in temperatures:
+    print(f"\n=== Température = {temp} ===")
+    response = client.chat.completions.create(
+        model="llama-3.1-8b-instant",
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt}
+        ],
+        max_tokens=200,
+        temperature=temp   # <-- c'est ici que ça change
+    )
+    print(response.choices[0].message.content)
+    print(f"(Tokens utilisés : {response.usage.total_tokens})")
