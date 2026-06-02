@@ -71,6 +71,7 @@ load_dotenv()
 # Client Groq (charge au demarrage)
 groq_client = None
 groq_api_key = os.getenv("GROQ_API_KEY")
+print(f"DEBUG: GROQ_API_KEY = {groq_api_key[:10] if groq_api_key else 'None'}...")
 if groq_api_key:
     groq_client = Groq(api_key=groq_api_key)
     print("Client Groq initialise.")
@@ -201,69 +202,7 @@ def explain(data: ExplainInput):
     return ExplainOutput(explication=explication, modele_llm="llama-3.1-8b-instant")
     
 
-    # 1. Encoder les variables categoriques
-    try:
-        sexe_enc = le_sexe.transform([patient.sexe])[0]
-    except ValueError:
-        return DiagnosticOutput(
-            diagnostic="erreur",
-            probabilite=0.0,
-            confiance="aucune",
-            message=f"Sexe invalide : {patient.sexe}. Utiliser M ou F."
-        )
-    try:
-        region_enc = le_region.transform([patient.region])[0]
-    except ValueError:
-        return DiagnosticOutput(
-            diagnostic="erreur",
-            probabilite=0.0,
-            confiance="aucune",
-            message=f"Region inconnue : {patient.region}."
-        )
-
-    # 2. Construire le vecteur de features
-    features = np.array([[
-        patient.age,
-        sexe_enc,
-        patient.temperature,
-        patient.tension_sys,
-        int(patient.toux),
-        int(patient.fatigue),
-        int(patient.maux_tete),
-        region_enc
-    ]])
-
-    # 3. Predire
-    diagnostic = model.predict(features)[0]
-    probas = model.predict_proba(features)[0]
-    proba_max = float(probas.max())
-
-    # 4. Determiner le niveau de confiance
-    if proba_max >= 0.7:
-        confiance = "haute"
-    elif proba_max >= 0.4:
-        confiance = "moyenne"
-    else:
-        confiance = "faible"
-
-    # 5. Generer la recommandation
-    messages = {
-        "paludisme": "Suspicion de paludisme. Consultez rapidement.",
-        "grippe": "Suspicion de grippe. Repos et hydratation.",
-        "typhoide": "Suspicion de typhoïde. Consultation necessaire.",
-        "sain": "Pas de pathologie detectee."
-    }
-
-    # 6. Renvoyer le resultat
-    return DiagnosticOutput(
-        diagnostic=diagnostic,
-        probabilite=round(proba_max, 2),
-        confiance=confiance,
-        message=messages.get(diagnostic, "Consultez un medecin.")
-    )
-
-
-
+   
 
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
