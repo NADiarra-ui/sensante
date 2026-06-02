@@ -11,7 +11,7 @@ pinned: false
 Assistant pré-diagnostic médical pour le Sénégal.
 
 ## Démo en ligne
-https://Ayssatou-sensante.hf.space
+https://Ayssatou-sensante-V1.hf.space
 
 ## Stack
 - scikit-learn (modèle ML)
