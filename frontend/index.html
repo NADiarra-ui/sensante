@@ -305,7 +305,7 @@ async function demanderExplication(diagnostic_data) {
     section.querySelector(".bg-white").appendChild(explDiv);
 
     try {
-        const response = await fetch("http://localhost:8000/explain", {
+        const response = await fetch(API_URL + "/explain", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(explainData)
