@@ -65,7 +65,17 @@ feature_cols = joblib.load("models/feature_cols.pkl")
 print(f"Modele charge : {type(model).__name__}")
 print(f"Classes : {list(model.classes_)}")
 
+# Charger les variables d'environnement
+load_dotenv()
 
+# Client Groq (charge au demarrage)
+groq_client = None
+groq_api_key = os.getenv("GROQ_API_KEY")
+if groq_api_key:
+    groq_client = Groq(api_key=groq_api_key)
+    print("Client Groq initialise.")
+else:
+    print("ATTENTION : GROQ_API_KEY non trouvee. /explain sera desactive.")
 
 # --- Route de santé ---
 @app.get("/health")
@@ -253,17 +263,6 @@ def explain(data: ExplainInput):
     )
 
 
-    # Charger les variables d'environnement
-load_dotenv()
-
-# Client Groq (charge au demarrage)
-groq_client = None
-groq_api_key = os.getenv("GROQ_API_KEY")
-if groq_api_key:
-    groq_client = Groq(api_key=groq_api_key)
-    print("Client Groq initialise.")
-else:
-    print("ATTENTION : GROQ_API_KEY non trouvee. /explain sera desactive.")
 
 
 from fastapi.staticfiles import StaticFiles
